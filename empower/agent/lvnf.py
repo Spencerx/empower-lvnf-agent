@@ -123,7 +123,7 @@ class LVNF():
 
         try:
 
-            _, errs = self.process.communicate(timeout=1)
+            _, errs = self.process.communicate(timeout=0.5)
 
         except subprocess.TimeoutExpired:
 
@@ -164,31 +164,31 @@ class LVNF():
 
             self.process.poll()
 
-            if self.process.returncode is not None:
+            if not self.process.returncode:
+                time.sleep(2)
+                continue
 
-                try:
-                    _, errs = self.process.communicate(timeout=0.5)
-                except subprocess.TimeoutExpired:
-                    self.process.kill()
-                    _, errs = self.process.communicate(timeout=0.5)
+            try:
+                _, errs = self.process.communicate(timeout=0.5)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+                _, errs = self.process.communicate()
 
-                logging.info("LVNF %s terminated with code %u", self.lvnf_id,
-                             self.process.returncode)
+            logging.info("LVNF %s terminated with code %u", self.lvnf_id,
+                         self.process.returncode)
 
-                if errs.decode("utf-8"):
-                    logging.info("LVNF error: %s", errs.decode("utf-8"))
+            if errs.decode("utf-8"):
+                logging.info("LVNF error: %s", errs.decode("utf-8"))
 
-                # send status
-                self.agent.send_caps(self.lvnf_id)
+            # send status
+            self.agent.send_caps(self.lvnf_id)
 
-                # delete lvnf from agent
-                del self.agent.lvnfs[self.lvnf_id]
+            # delete lvnf from agent
+            del self.agent.lvnfs[self.lvnf_id]
 
-                logging.info("LVNF %s stopped", self.lvnf_id)
+            logging.info("LVNF %s stopped", self.lvnf_id)
 
-                return
-
-            time.sleep(2)
+            return
 
         logging.info("Terminating LVNF %s heartbeat", self.lvnf_id)
 
