@@ -45,7 +45,8 @@ class LVNF():
         ValueError: If any of the input parameters is invalid
     """
 
-    def __init__(self, agent, lvnf_id, tenant_id, image, bridge, vnf_seq):
+    def __init__(self, agent, lvnf_id, tenant_id, image, bridge, vnf_seq,
+                 context):
 
         self.agent = agent
         self.lvnf_id = lvnf_id
@@ -56,9 +57,10 @@ class LVNF():
         self.ctrl = agent.listen + self.vnf_seq
         self.script = ""
         self.ports = {}
-        self.context = {}
+        self.context = context
         self.process = None
         self.thread = None
+        self.creation_time = None
 
         # generate boilerplate code (input)
         for i in range(self.image.nb_ports):
@@ -106,24 +108,31 @@ class LVNF():
             ret = write_handler("127.0.0.1", self.ctrl, handler, value)
             return (ret[0], ret[1])
 
-    def __set_context(self, context=None):
+    def __set_context(self):
 
-        if not context:
+        if not self.context:
             return
 
-        for handler in context:
+        logging.info("Restoring context LVNF %s", self.lvnf_id)
+
+        for handler in self.context:
             handler_name = self.image.handlers[handler]
-            for line in context[handler]:
+            for line in self.context[handler]:
                 self.write_handler(handler_name, line)
 
-    def init_lvnf(self, context=None):
+    def __init_lvnf(self):
         """Start LVNF."""
 
-        logging.info("Starting LVNF %s.", self.lvnf_id)
+        logging.info("Starting LVNF %s", self.lvnf_id)
+        logging.info(self)
+
+        self.process = \
+            subprocess.Popen(["/usr/local/bin/click", "-e", self.script],
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         try:
 
-            _, errs = self.process.communicate(timeout=0.5)
+            _, errs = self.process.communicate(timeout=0.2)
 
         except subprocess.TimeoutExpired:
 
@@ -131,18 +140,21 @@ class LVNF():
                          self.process.pid)
 
             # set context
-            self.__set_context(context)
+            self.__set_context()
 
             # add interfaces
-            self.add_ifaces()
+            self.__add_ifaces()
 
             # send status
             self.agent.send_caps(self.lvnf_id)
 
             # this thread is done, start hearbeat thread
-            self.thread = threading.Thread(target=self.heartbeat, args=())
+            self.thread = threading.Thread(target=self.__heartbeat, args=())
             self.thread.signal = True
             self.thread.start()
+
+            toc = time.time() - self.creation_time
+            logging.info("LVNF %s took %f ms to start.", self.lvnf_id, toc)
 
             return
 
@@ -152,12 +164,12 @@ class LVNF():
         logging.info("LVNF error: \n%s", errs.decode("utf-8"))
 
         # send status
-        self.agent.send_caps(self.lvnf_id)
+        self.agent.send_status_lvnf(self.lvnf_id)
 
         # delete lvnf from agent
         del self.agent.lvnfs[self.lvnf_id]
 
-    def heartbeat(self):
+    def __heartbeat(self):
         """Check process status."""
 
         while self.thread.signal:
@@ -168,17 +180,16 @@ class LVNF():
                 time.sleep(2)
                 continue
 
-            try:
-                _, errs = self.process.communicate(timeout=0.5)
-            except subprocess.TimeoutExpired:
-                self.process.kill()
-                _, errs = self.process.communicate()
+            _, errs = self.process.communicate()
 
             logging.info("LVNF %s terminated with code %u", self.lvnf_id,
                          self.process.returncode)
 
             if errs.decode("utf-8"):
                 logging.info("LVNF error: %s", errs.decode("utf-8"))
+
+            # remove interfaces
+            self.__remove_ifaces()
 
             # send status
             self.agent.send_caps(self.lvnf_id)
@@ -192,34 +203,53 @@ class LVNF():
 
         logging.info("Terminating LVNF %s heartbeat", self.lvnf_id)
 
-    def start(self, context=None):
-        """Start click daemon."""
+    def start(self):
+        """Start VNF."""
 
-        logging.info("Starting LVNF %s", self.lvnf_id)
-        logging.info(self)
+        self.creation_time = time.time()
 
         # add to agent
         self.agent.lvnfs[self.lvnf_id] = self
 
-        self.process = \
-            subprocess.Popen(["/usr/local/bin/click", "-e", self.script],
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+        # Test script
+        logging.info("Testing LVNF %s", self.lvnf_id)
 
-        if context:
-            args = (context,)
-        else:
-            args = ()
+        cmd = ["/usr/local/bin/click", "-q", "-e", self.script]
+        self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE)
 
-        threading.Thread(target=self.init_lvnf, args=args).start()
+        _, errs = self.process.communicate()
+
+        if self.process.returncode != 0:
+
+            logging.info("LVNF %s terminated with code %u", self.lvnf_id,
+                         self.process.returncode)
+
+            logging.info("LVNF error: \n%s", errs.decode("utf-8"))
+
+            # send status
+            self.agent.send_status_lvnf(self.lvnf_id)
+
+            # delete lvnf from agent
+            del self.agent.lvnfs[self.lvnf_id]
+
+            return
+
+        # Script is ok, start LVNF
+        threading.Thread(target=self.__init_lvnf, args=()).start()
 
     def stop(self):
         """Stop click daemon."""
 
+        # Disable heartbeat
+        self.thread.signal = False
+
+        tic = time.time()
+
         logging.info("Stopping LVNF %s", self.lvnf_id)
 
-        # add interfaces
-        self.remove_ifaces()
+        # remove interfaces
+        self.__remove_ifaces()
 
         # save context
         self.context = {}
@@ -230,8 +260,23 @@ class LVNF():
 
         # stop click
         self.process.kill()
+        self.process.communicate()
 
-    def add_ifaces(self):
+        logging.info("LVNF %s terminated with code %u", self.lvnf_id,
+                     self.process.returncode)
+
+        # send status
+        self.agent.send_status_lvnf(self.lvnf_id)
+
+        # delete lvnf from agent
+        del self.agent.lvnfs[self.lvnf_id]
+
+        logging.info("LVNF %s stopped", self.lvnf_id)
+
+        toc = time.time() - tic
+        logging.info("LVNF %s took %f ms to stop.", self.lvnf_id, toc)
+
+    def __add_ifaces(self):
         """Add ifaces to bridge."""
 
         for virtual_port_id in self.ports:
@@ -259,7 +304,7 @@ class LVNF():
             self.ports[virtual_port_id]['hwaddr'] = get_hw_addr(iface)
             self.ports[virtual_port_id]['ovs_port_id'] = ovs_port_id
 
-    def remove_ifaces(self):
+    def __remove_ifaces(self):
         """Remove ifaces from bridge."""
 
         for virtual_port_id in self.ports:

@@ -285,14 +285,12 @@ class EmpowerAgent(websocket.WebSocketApp):
 
         handler_name = "_handle_%s" % msg['type']
 
-        if hasattr(self, handler_name):
-            handler = getattr(self, handler_name)
-            try:
-                handler(msg)
-            except Exception as ex:
-                logging.info(ex)
-        else:
+        if not hasattr(self, handler_name):
             logging.info("Unknown message type: %s", msg['type'])
+            return
+
+        handler = getattr(self, handler_name)
+        handler(msg)
 
     def send_message(self, message_type, message):
         """Add fixed header fields and send message. """
@@ -367,6 +365,7 @@ class EmpowerAgent(websocket.WebSocketApp):
 
         lvnf_id = UUID(message['lvnf_id'])
         tenant_id = UUID(message['tenant_id'])
+        context = message['context']
 
         image = Image(nb_ports=message['image']['nb_ports'],
                       vnf=message['image']['vnf'],
@@ -378,9 +377,10 @@ class EmpowerAgent(websocket.WebSocketApp):
                     tenant_id=tenant_id,
                     image=image,
                     bridge=self.bridge,
-                    vnf_seq=self.vnf_seq)
+                    vnf_seq=self.vnf_seq,
+                    context=context)
 
-        lvnf.start(context=message['context'])
+        lvnf.start()
 
     def _handle_del_lvnf(self, message):
         """Handle DEL_LVNF message.
