@@ -96,8 +96,9 @@ def on_message(websock, message):
         websock.downlink_bytes += len(message)
         msg = json.loads(message)
         websock.handle_message(msg)
-    except ValueError:
-        logging.info("Invalid input: %s", message)
+    except ValueError as ex:
+        logging.info("Invalid input: %s", ex)
+        logging.info(message)
 
 
 def on_close(websock):
@@ -140,6 +141,7 @@ class EmpowerAgent(websocket.WebSocketApp):
         self.on_open = None
         self.on_close = None
         self.on_message = None
+        self.click = "/usr/local/bin/click"
 
         logging.info("Initializing the EmPOWER Agent...")
         logging.info("Bridge %s (hwaddr=%s)", self.bridge, self.addr)

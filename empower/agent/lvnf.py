@@ -73,7 +73,6 @@ class LVNF():
                              'virtual_port_id': i,
                              'ovs_port_id': None}
 
-            self.script += "ControlSocket(TCP, %u);\n" % self.ctrl
             self.script += "in_%u :: FromHost(%s);\n" % (i, iface)
             self.script += "out_%u :: ToHost(%s);\n" % (i, iface)
 
@@ -126,9 +125,10 @@ class LVNF():
         logging.info("Starting LVNF %s", self.lvnf_id)
         logging.info(self)
 
-        self.process = \
-            subprocess.Popen(["/usr/local/bin/click", "-e", self.script],
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = [self.agent.click, "-e", self.script, "-p", str(self.ctrl), "-R"]
+
+        self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE)
 
         try:
 
@@ -349,7 +349,7 @@ class LVNF():
 
         out = {'lvnf_id': self.lvnf_id,
                'tenant_id': self.tenant_id,
-               'image': self.image.to_dict(),
+               'image': self.image,
                'vnf_seq': self.vnf_seq,
                'ctrl': self.ctrl,
                'script': self.script,
