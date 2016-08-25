@@ -1,9 +1,20 @@
-EmPOWER LVNF Agent
-==================
+EmPOWER: Mobile Networks Operating System
+=========================================
 
-EmPOWER is a Mobile Network Operating System.
+### What is EmPOWER?
+EmPOWER is a new network operating system designed for heterogeneous mobile networks.
 
-This repository include the LVNF agent. The LVNF agent runs on a Linux box
-and is responsible for managing Click-based Virtual Network Functions.
+### Top-Level Features
+* Supports both LTE and WiFi radio access networks
+* Northbound abstractions for a global network view, network graph, and
+  application intents.
+* REST API and native (Python) API for accessing the Northbound abstractions
+* Support for Click-based Lightweight Virtual Networks Functions
+* Declarative VNF chaning on precise portion of the flowspace
+* Flexible southbound interface supporting WiFi APs LTE eNBs
+
+Checkout out our [website](http://empower.create-net.org/) and our [wiki](https://github.com/5g-empower/5g-empower.github.io/wiki).
+
+This repository include the EmPOWER LVNF agent. The LVNF agent is responsible for deploying and managing Click-based Virtual Network Functions.
 
 Code is released under the Apache License, Version 2.0.
