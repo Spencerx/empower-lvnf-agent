@@ -10,8 +10,7 @@
 # bits.		
 #		
 # By default this script does nothing.		
-		
-/etc/init.d/networking restart		
+			
 /etc/init.d/empower-lvnf-agent start		
 		
 exit 0
