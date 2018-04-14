@@ -5,7 +5,7 @@
 # Required-Start:       $remote_fs $syslog
 # Required-Stop:        $remote_fs $syslog
 # Default-Start:        2 3 4 5
-# Default-Stop:         
+# Default-Stop:
 # Short-Description:    OpenBSD Secure Shell server
 ### END INIT INFO
 
@@ -15,7 +15,7 @@ DESC="EmPOWER LVNF Agent"
 NAME=empower-lvnf-agent
 BRIDGE=br0
 DAEMON=/usr/bin/$NAME
-DAEMON_ARGS="-c 192.168.100.158 -b $BRIDGE -o tcp:192.168.100.158:6633 -l /var/log/$NAME.log"
+DAEMON_ARGS="-c 192.168.100.158 -b $BRIDGE -o tcp:192.168.100.158:6633 -l /var/log/$NAME"
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 
@@ -34,19 +34,21 @@ SCRIPTNAME=/etc/init.d/$NAME
 do_start ()
 
 {
-    # Return 
+    # Return
     # 0 if daemon has been started
     # 1 if daemon was already running
     # 2 if daemon could not be started
-    
+
     [ -f $PIDFILE ] && {
-        echo "$NAME already running"       
-        return 1 
+        echo "$NAME already running"
+        return 1
     }
 
     for port in $(ovs-ofctl show br0 | sed -n 's/\(.*\)(\([0-9AZa-z]*\)): addr:\([0-9A-Za-z\:]*\).*/\2/p'); do
         /sbin/ifconfig $port up
     done
+
+    mkdir -p /var/log/$NAME;
 
     start-stop-daemon --start --background --make-pidfile --pidfile $PIDFILE --exec $DAEMON -- $DAEMON_ARGS || return 2
 }
@@ -61,7 +63,7 @@ do_stop()
         #   1 if daemon was already stopped
         #   2 if daemon could not be stopped
         #   other if a failure occurred
-        start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE 
+        start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE
         RETVAL="$?"
         # Many daemons don't delete their pidfiles when they exit.
         rm -f $PIDFILE
@@ -81,7 +83,7 @@ case "$1" in
         #
         # If the "reload" option is implemented then remove the
         # 'force-reload' alias
-        # 
+        #
         echo "Restarting $DESC" "$NAME"
         do_stop
         do_start

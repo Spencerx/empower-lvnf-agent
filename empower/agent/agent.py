@@ -120,7 +120,7 @@ class EmpowerAgent(websocket.WebSocketApp):
         vnf_seq: the next virtual tap interface id
     """
 
-    def __init__(self, url, ctrl, bridge, every, listen):
+    def __init__(self, url, ctrl, bridge, every, listen, logdir):
 
         super().__init__(url)
 
@@ -142,6 +142,7 @@ class EmpowerAgent(websocket.WebSocketApp):
         self.on_close = None
         self.on_message = None
         self.click = "/usr/local/bin/click"
+        self.logdir = logdir
 
         logging.info("Initializing the EmPOWER Agent...")
         logging.info("Bridge %s (hwaddr=%s)", self.bridge, self.addr)
@@ -468,7 +469,7 @@ def main():
 
     parser = ArgumentParser(usage=usage)
 
-    parser.add_argument("-l", "--log", dest="log", default=None,
+    parser.add_argument("-l", "--logdir", dest="logdir", default=None,
                         help="Logfile; default=None")
 
     parser.add_argument("-o", "--ofctrl", dest="ofctrl", default=OF_CTRL,
@@ -496,15 +497,16 @@ def main():
 
     (args, _) = parser.parse_known_args(sys.argv[1:])
 
-    if args.log:
-        logging.basicConfig(filename=args.log, level=logging.DEBUG)
+    if args.logdir:
+        logging.basicConfig(filename=args.logdir + "/agent.log",
+                            level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.DEBUG)
 
     url = "%s://%s:%u/" % (args.transport, args.ctrl, args.port)
 
     agent = EmpowerAgent(url, args.ofctrl, args.bridge, args.every,
-                         args.listen)
+                         args.listen, args.logdir)
 
     agent.on_open = on_open
     agent.on_message = on_message

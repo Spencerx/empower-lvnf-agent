@@ -73,8 +73,8 @@ class LVNF():
                              'virtual_port_id': i,
                              'ovs_port_id': None}
 
-            self.script += "in_%u :: FromHost(%s);\n" % (i, iface)
-            self.script += "out_%u :: ToHost(%s);\n" % (i, iface)
+            self.script += ("kt_%u :: KernelTap(10.0.0.1/24, DEV_NAME %s);\n"
+                            % (i, iface))
 
         # append vnf
         self.script += self.image.vnf
@@ -127,8 +127,14 @@ class LVNF():
 
         cmd = [self.agent.click, "-e", self.script, "-p", str(self.ctrl), "-R"]
 
-        self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE)
+        log_file_name = "/dev/null"
+
+        if self.agent.logdir:
+            log_file_name = "%s/vnf-%s-%u.log" \
+                            % (self.agent.logdir, self.bridge, self.vnf_seq)
+
+        logfile = open(log_file_name, "w")
+        self.process = subprocess.Popen(cmd, stdout=logfile, stderr=logfile)
 
         try:
 
