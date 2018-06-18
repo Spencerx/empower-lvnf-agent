@@ -120,7 +120,7 @@ class EmpowerAgent(websocket.WebSocketApp):
         vnf_seq: the next virtual tap interface id
     """
 
-    def __init__(self, url, ctrl, bridge, every, listen, logdir):
+    def __init__(self, url, ctrl, bridge, bridge_dpid, every, listen, logdir):
 
         super().__init__(url)
 
@@ -144,8 +144,15 @@ class EmpowerAgent(websocket.WebSocketApp):
         self.click = "/usr/local/bin/click"
         self.logdir = logdir
 
+        if bridge_dpid:
+            self.bridge_dpid = ':'.join(bridge_dpid[i:i + 2].upper()
+                                        for i in range(0, len(bridge_dpid), 2))
+        else:
+            self.bridge_dpid = None
+
         logging.info("Initializing the EmPOWER Agent...")
-        logging.info("Bridge %s (hwaddr=%s)", self.bridge, self.addr)
+        logging.info("Bridge %s (hwaddr=%s, dpid=%s)",
+                     self.bridge, self.addr, self.bridge_dpid)
 
         for port in self.ports.values():
             logging.info("Port %u (iface=%s, hwaddr=%s)",
@@ -318,7 +325,8 @@ class EmpowerAgent(websocket.WebSocketApp):
     def send_caps(self, lvnf_id=None):
         """ Send CAPS RESPONSE message. """
 
-        caps = {'ports': self.ports}
+        caps = {'dpid': self.bridge_dpid,
+                'ports': self.ports}
         self.send_message(PT_CAPS, caps)
 
         # send lvnf status message
@@ -485,6 +493,9 @@ def main():
     parser.add_argument("-b", "--bridge", dest="bridge", default=BRIDGE,
                         help="Bridge interface; default='%s'" % BRIDGE)
 
+    parser.add_argument("-d", "--bridge_dpid", dest="bridge_dpid", default=None,
+                        help="Bridge datapath id; default=None")
+
     parser.add_argument("-t", "--transport", dest="transport", default="ws",
                         help="Specify the transport; default='ws'")
 
@@ -504,9 +515,8 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
 
     url = "%s://%s:%u/" % (args.transport, args.ctrl, args.port)
-
-    agent = EmpowerAgent(url, args.ofctrl, args.bridge, args.every,
-                         args.listen, args.logdir)
+    agent = EmpowerAgent(url, args.ofctrl, args.bridge, args.bridge_dpid,
+                         args.every, args.listen, args.logdir)
 
     agent.on_open = on_open
     agent.on_message = on_message
