@@ -34,6 +34,7 @@ from empower.core.image import Image
 from empower.agent.lvnf import get_hw_addr
 from empower.agent.lvnf import exec_cmd
 from empower.agent.lvnf import LVNF
+from empower.agent.utils import get_dpid
 from empower.agent import PT_VERSION
 from empower.agent import PT_HELLO
 from empower.agent import PT_CAPS
@@ -130,6 +131,7 @@ class EmpowerAgent(websocket.WebSocketApp):
         self.__prefix = 0
         self.__vnf_seq = 0
         self.addr = None
+        self.dpid = None
         self.every = every
         self.listen = listen
         self.functions = {}
@@ -145,7 +147,8 @@ class EmpowerAgent(websocket.WebSocketApp):
         self.logdir = logdir
 
         logging.info("Initializing the EmPOWER Agent...")
-        logging.info("Bridge %s (hwaddr=%s)", self.bridge, self.addr)
+        logging.info("Bridge %s (hwaddr=%s, dpid=%s)",
+                     self.bridge, self.addr, self.dpid)
 
         for port in self.ports.values():
             logging.info("Port %u (iface=%s, hwaddr=%s)",
@@ -220,6 +223,8 @@ class EmpowerAgent(websocket.WebSocketApp):
 
         self.addr = EtherAddress(get_hw_addr(bridge))
         self.__bridge = bridge
+
+        self.dpid = get_dpid(bridge)
 
         if not self.ports:
             logging.info("Warning, no ports available on bridge %s",
@@ -318,7 +323,12 @@ class EmpowerAgent(websocket.WebSocketApp):
     def send_caps(self, lvnf_id=None):
         """ Send CAPS RESPONSE message. """
 
-        caps = {'ports': self.ports}
+        caps = {}
+
+        if self.dpid:
+            caps = {'dpid': self.dpid,
+                    'ports': self.ports}
+
         self.send_message(PT_CAPS, caps)
 
         # send lvnf status message
@@ -504,7 +514,6 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
 
     url = "%s://%s:%u/" % (args.transport, args.ctrl, args.port)
-
     agent = EmpowerAgent(url, args.ofctrl, args.bridge, args.every,
                          args.listen, args.logdir)
 
