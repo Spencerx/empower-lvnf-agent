@@ -14,15 +14,8 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="EmPOWER LVNF Agent"
 NAME=empower-lvnf-agent
 BRIDGE=br0
-BRIDGE_DPID=$(ovs-ofctl show $BRIDGE | grep -o 'dpid.*' | cut -f2- -d:)
 DAEMON=/usr/bin/$NAME
 DAEMON_ARGS="-c 192.168.100.158 -b $BRIDGE -o tcp:192.168.100.158:6633 -l /var/log/$NAME"
-
-if ! [ -z "$BRIDGE_DPID" ]
-then
-    DAEMON_ARGS="$DAEMON_ARGS -d $BRIDGE_DPID"
-fi
-
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 
