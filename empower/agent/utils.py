@@ -47,6 +47,7 @@ def get_hw_addr(ifname):
 
     return ':'.join(['%02x' % char for char in info[18:24]])
 
+
 def get_dpid(bridge):
     """Fetch datapath id from bridge
 

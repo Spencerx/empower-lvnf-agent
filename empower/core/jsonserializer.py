@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2016 Roberto Riggio
+# Copyright (c) 2018 Roberto Riggio
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ class IterEncoder(json.JSONEncoder):
     """Encode iterable objects as lists."""
 
     def default(self, obj):
+
         try:
             return list(obj)
         except TypeError:
@@ -40,20 +41,20 @@ class EmpowerEncoder(IterEncoder):
 
     def default(self, obj):
 
-        if isinstance(obj, types.FunctionType) or \
-           isinstance(obj, types.MethodType):
+        if isinstance(obj, (types.FunctionType, types.MethodType)):
             return obj.__name__
 
-        if isinstance(obj, uuid.UUID):
-            return str(obj)
+        instances = (uuid.UUID,
+                     empower.datatypes.ssid.SSID,
+                     empower.datatypes.etheraddress.EtherAddress)
 
-        if isinstance(obj, empower.datatypes.ssid.SSID):
-            return str(obj)
-
-        if isinstance(obj, empower.datatypes.etheraddress.EtherAddress):
+        if isinstance(obj, instances):
             return str(obj)
 
         if hasattr(obj, 'to_dict'):
             return obj.to_dict()
+
+        if hasattr(obj, 'isoformat'):
+            return obj.isoformat()
 
         return super().default(obj)

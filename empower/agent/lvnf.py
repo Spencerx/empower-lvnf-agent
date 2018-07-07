@@ -102,10 +102,8 @@ class LVNF():
 
             return (ret[0], ret[1])
 
-        else:
-
-            ret = write_handler("127.0.0.1", self.ctrl, handler, value)
-            return (ret[0], ret[1])
+        ret = write_handler("127.0.0.1", self.ctrl, handler, value)
+        return (ret[0], ret[1])
 
     def __set_context(self):
 
