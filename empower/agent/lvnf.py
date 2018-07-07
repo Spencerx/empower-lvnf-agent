@@ -372,5 +372,5 @@ class LVNF():
         """ Return a string representation of the VNF."""
 
         return "LVNF %s (ports=[%s])\n%s" % \
-            (self.lvnf_id, ",".join([str(x) for x in self.ports.keys()]),
+            (self.lvnf_id, ",".join([str(k) for k, _ in self.ports.items()]),
              self.script.strip())

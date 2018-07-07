@@ -17,16 +17,17 @@
 
 """The EmPOWER Agent."""
 
+import time
+import logging
 import re
 import sys
 import json
-import websocket
-import _thread
-import time
-import logging
 
 from uuid import UUID
 from argparse import ArgumentParser
+
+import websocket
+import _thread
 
 from empower.datatypes.etheraddress import EtherAddress
 from empower.core.jsonserializer import EmpowerEncoder
@@ -333,8 +334,8 @@ class EmpowerAgent(websocket.WebSocketApp):
 
         # send lvnf status message
         if not lvnf_id:
-            for lvnf_id in self.lvnfs:
-                self.send_status_lvnf(lvnf_id)
+            for uuid in self.lvnfs:
+                self.send_status_lvnf(uuid)
         else:
             self.send_status_lvnf(lvnf_id)
 
