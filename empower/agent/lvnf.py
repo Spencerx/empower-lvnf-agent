@@ -140,8 +140,10 @@ class LVNF():
 
         except subprocess.TimeoutExpired:
 
-            logging.info("LVNF %s is running pid %u", self.lvnf_id,
-                         self.process.pid)
+            logging.info("LVNF %s is running pid %u returncode %u",
+                         self.lvnf_id,
+                         self.process.pid,
+                         self.process.reurncode)
 
             # set context
             self.__set_context()
