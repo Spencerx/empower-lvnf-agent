@@ -136,7 +136,7 @@ class LVNF():
 
         try:
 
-            _, errs = self.process.communicate(timeout=0.2)
+            _, errs = self.process.communicate(timeout=0.5)
 
         except subprocess.TimeoutExpired:
 
@@ -184,7 +184,7 @@ class LVNF():
                 time.sleep(2)
                 continue
 
-            _, errs = self.process.communicate()
+            _, errs = self.process.communicate(timeout=0.5)
 
             logging.info("LVNF %s terminated with code %u", self.lvnf_id,
                          self.process.returncode)
