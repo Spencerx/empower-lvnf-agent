@@ -157,6 +157,9 @@ class LVNF():
             toc = time.time() - self.creation_time
             logging.info("LVNF %s took %f ms to start.", self.lvnf_id, toc)
 
+            # send status
+            self.agent.send_add_lvnf_response(self.lvnf_id)
+
             return
 
         logging.info("LVNF %s terminated with code %u", self.lvnf_id,
