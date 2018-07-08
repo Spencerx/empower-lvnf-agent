@@ -39,10 +39,12 @@ from empower.agent.utils import get_dpid
 from empower.agent import PT_VERSION
 from empower.agent import PT_HELLO
 from empower.agent import PT_CAPS_RESPONSE
-from empower.agent import PT_STATUS_LVNF
+from empower.agent import PT_LVNF_STATUS_RESPONSE
 from empower.agent import PT_LVNF_STATS_RESPONSE
 from empower.agent import PT_LVNF_GET_RESPONSE
 from empower.agent import PT_LVNF_SET_RESPONSE
+from empower.agent import PT_ADD_LVNF_RESPONSE
+from empower.agent import PT_DEL_LVNF_RESPONSE
 
 BRIDGE = "br-ovs"
 DEFAULT_EVERY = 2
@@ -336,14 +338,15 @@ class EmpowerAgent(websocket.WebSocketApp):
 
         self.send_message(PT_CAPS_RESPONSE, caps)
 
-    def send_status_lvnf(self, lvnf_id):
+    def send_lvnf_status_response(self):
         """ Send STATUS FUNCTION message. """
 
-        if lvnf_id not in self.lvnfs:
-            raise KeyError("LVNF %s not found" % lvnf_id)
+        message = {}
 
-        status = self.lvnfs[lvnf_id].to_dict()
-        self.send_message(PT_STATUS_LVNF, status)
+        for lvnf in self.lvnfs:
+            message[lvnf.lvnf_id] = lvnf.to_dict()
+
+        self.send_message(PT_LVNF_STATUS_RESPONSE, message)
 
     def send_add_lvnf_response(self, lvnf_id):
         """ Send ADD_LVNF_RESPONSE message. """
@@ -352,7 +355,7 @@ class EmpowerAgent(websocket.WebSocketApp):
             raise KeyError("LVNF %s not found" % lvnf_id)
 
         status = self.lvnfs[lvnf_id].to_dict()
-        self.send_message(PT_STATUS_LVNF, status)
+        self.send_message(PT_ADD_LVNF_RESPONSE, status)
 
     def send_del_lvnf_response(self, lvnf_id):
         """ Send DEL_LVNF_RESPONSE message. """
@@ -361,7 +364,7 @@ class EmpowerAgent(websocket.WebSocketApp):
             raise KeyError("LVNF %s not found" % lvnf_id)
 
         status = self.lvnfs[lvnf_id].to_dict()
-        self.send_message(PT_STATUS_LVNF, status)
+        self.send_message(PT_DEL_LVNF_RESPONSE, status)
 
     def _handle_caps_request(self, message):
         """Handle CAPS_REQUEST message.
@@ -375,6 +378,19 @@ class EmpowerAgent(websocket.WebSocketApp):
         dump_message(message)
 
         self.send_caps_response()
+
+    def _handle_lvnf_status_response(self, message):
+        """Handle STATUS_LVNF message.
+
+        Args:
+            message, a STATUS_LVNF message
+        Returns:
+            None
+        """
+
+        dump_message(message)
+
+        self.send_lvnf_status_response()
 
     def _handle_lvnf_stats_request(self, message):
         """Handle LVNF_STATS message.
