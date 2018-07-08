@@ -48,30 +48,6 @@ def get_hw_addr(ifname):
     return ':'.join(['%02x' % char for char in info[18:24]])
 
 
-def get_dpid(bridge):
-    """Fetch datapath id from bridge
-
-    Retrieve the datapath id of the bridge.
-
-    Args:
-        bridge: the bridge name as a string
-
-    Returns:
-        A string object
-    """
-
-    raw_output = exec_cmd(["ovs-ofctl", "show", bridge])
-
-    for line in raw_output.split('\n'):
-
-        if "dpid" in line:
-            dpid = line.split("dpid:")[1]
-            return ':'.join(dpid[i:i + 2].upper()
-                            for i in range(0, len(dpid), 2))
-
-    return None
-
-
 def exec_cmd(cmd, timeout=2):
     """Execute command and return its output.
 

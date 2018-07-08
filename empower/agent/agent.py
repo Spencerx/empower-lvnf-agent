@@ -226,11 +226,14 @@ class EmpowerAgent(websocket.WebSocketApp):
         self.addr = EtherAddress(get_hw_addr(bridge))
         self.__bridge = bridge
 
-        self.dpid = get_dpid(bridge)
+        cmd = ["ovs-vsctl", "show", self.bridge]
+        lines = exec_cmd(cmd).split('\n')
 
-        if not self.ports:
-            logging.info("Warning, no ports available on bridge %s",
-                         self.bridge)
+        for line in lines:
+            if "dpid" in line:
+                dpid = line.split("dpid:")[1]
+                return ':'.join(dpid[i:i + 2].upper()
+                                for i in range(0, len(dpid), 2))
 
         cmd = ["ovs-vsctl", "list-ports", self.bridge]
         lines = exec_cmd(cmd).split('\n')
