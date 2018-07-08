@@ -22,6 +22,7 @@ import socket
 import struct
 import re
 import subprocess
+import random
 
 
 def get_xid():
