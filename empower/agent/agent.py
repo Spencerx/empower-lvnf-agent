@@ -379,7 +379,7 @@ class EmpowerAgent(websocket.WebSocketApp):
 
         self.send_caps_response()
 
-    def _handle_lvnf_status_response(self, message):
+    def _handle_lvnf_status_request(self, message):
         """Handle STATUS_LVNF message.
 
         Args:
