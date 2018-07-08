@@ -333,11 +333,7 @@ class EmpowerAgent(websocket.WebSocketApp):
     def send_caps_response(self):
         """ Send CAPS RESPONSE message. """
 
-        caps = {}
-
-        if self.dpid:
-            caps = {'dpid': self.dpid, 'ports': self.ports}
-
+        caps = {'dpid': self.dpid, 'ports': self.ports}
         self.send_message(PT_CAPS_RESPONSE, caps)
 
     def send_lvnf_status_response(self):
