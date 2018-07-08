@@ -143,7 +143,7 @@ class LVNF():
             logging.info("LVNF %s is running pid %u returncode %u",
                          self.lvnf_id,
                          self.process.pid,
-                         self.process.reurncode)
+                         self.process.returncode)
 
             # set context
             self.__set_context()
