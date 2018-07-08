@@ -346,17 +346,14 @@ class EmpowerAgent(websocket.WebSocketApp):
 
         self.send_message(PT_LVNF_STATUS_RESPONSE, message)
 
-    def send_add_lvnf_response(self, lvnf_id):
+    def send_add_lvnf_response(self, lvnf_id, xid):
         """ Send ADD_LVNF_RESPONSE message. """
 
         if lvnf_id not in self.lvnfs:
             raise KeyError("LVNF %s not found" % lvnf_id)
 
         status = self.lvnfs[lvnf_id].to_dict()
-
-        if self.dpid:
-            status['dpid'] = self.dpid
-            status['dpid_ports'] = self.ports
+        status['xid'] = xid
 
         self.send_message(PT_ADD_LVNF_RESPONSE, status)
 
@@ -367,10 +364,7 @@ class EmpowerAgent(websocket.WebSocketApp):
             raise KeyError("LVNF %s not found" % lvnf_id)
 
         status = self.lvnfs[lvnf_id].to_dict()
-
-        if self.dpid:
-            status['dpid'] = self.dpid
-            status['dpid_ports'] = self.ports
+        status['xid'] = xid
 
         self.send_message(PT_DEL_LVNF_RESPONSE, status)
 
@@ -434,6 +428,7 @@ class EmpowerAgent(websocket.WebSocketApp):
         lvnf_id = UUID(message['lvnf_id'])
         tenant_id = UUID(message['tenant_id'])
         context = message['context']
+        xid = message['xid']
 
         image = Image(nb_ports=message['image']['nb_ports'],
                       vnf=message['image']['vnf'],
@@ -448,7 +443,7 @@ class EmpowerAgent(websocket.WebSocketApp):
                     vnf_seq=self.vnf_seq,
                     context=context)
 
-        lvnf.start()
+        lvnf.start(xid)
 
     def _handle_del_lvnf(self, message):
         """Handle DEL_LVNF message.

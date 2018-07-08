@@ -117,7 +117,7 @@ class LVNF():
             for line in self.context[handler]:
                 self.write_handler(handler_name, line)
 
-    def __init_lvnf(self):
+    def __init_lvnf(self, xid):
         """Start LVNF."""
 
         logging.info("Starting LVNF %s", self.lvnf_id)
@@ -158,7 +158,7 @@ class LVNF():
             logging.info("LVNF %s took %f ms to start.", self.lvnf_id, toc)
 
             # send status
-            self.agent.send_add_lvnf_response(self.lvnf_id)
+            self.agent.send_add_lvnf_response(self.lvnf_id, xid)
 
             return
 
@@ -168,7 +168,7 @@ class LVNF():
         logging.info("LVNF error: \n%s", errs.decode("utf-8"))
 
         # send status
-        self.agent.send_add_lvnf_response(self.lvnf_id)
+        self.agent.send_add_lvnf_response(self.lvnf_id, xid)
 
         # delete lvnf from agent
         del self.agent.lvnfs[self.lvnf_id]
@@ -207,7 +207,7 @@ class LVNF():
 
         logging.info("Terminating LVNF %s heartbeat", self.lvnf_id)
 
-    def start(self):
+    def start(self, xid):
         """Start VNF."""
 
         self.creation_time = time.time()
@@ -232,7 +232,7 @@ class LVNF():
             logging.info("LVNF error: \n%s", errs.decode("utf-8"))
 
             # send status
-            self.agent.send_add_lvnf_response(self.lvnf_id)
+            self.agent.send_add_lvnf_response(self.lvnf_id, xid)
 
             # delete lvnf from agent
             del self.agent.lvnfs[self.lvnf_id]
@@ -240,7 +240,7 @@ class LVNF():
             return
 
         # Script is ok, start LVNF
-        threading.Thread(target=self.__init_lvnf, args=()).start()
+        threading.Thread(target=self.__init_lvnf, args=(xid)).start()
 
     def stop(self):
         """Stop click daemon."""
