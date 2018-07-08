@@ -225,7 +225,7 @@ class EmpowerAgent(websocket.WebSocketApp):
         self.addr = EtherAddress(get_hw_addr(bridge))
         self.__bridge = bridge
 
-        cmd = ["ovs-vsctl", "show"]
+        cmd = ["ovs-ofctl", "show", self.bridge]
         lines = exec_cmd(cmd).split('\n')
 
         for line in lines:
