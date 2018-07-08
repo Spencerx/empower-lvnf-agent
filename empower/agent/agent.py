@@ -345,10 +345,10 @@ class EmpowerAgent(websocket.WebSocketApp):
     def send_lvnf_status_response(self, xid):
         """ Send STATUS FUNCTION message. """
 
-        message = []
+        message = {'lvnfs': []}
 
         for lvnf in self.lvnfs.values():
-            message.append(lvnf.to_dict())
+            message['lvnfs'].append(lvnf.to_dict())
 
         self.send_message(PT_LVNF_STATUS_RESPONSE, message, xid)
 
