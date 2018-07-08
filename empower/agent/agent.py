@@ -355,6 +355,11 @@ class EmpowerAgent(websocket.WebSocketApp):
             raise KeyError("LVNF %s not found" % lvnf_id)
 
         status = self.lvnfs[lvnf_id].to_dict()
+
+        if self.dpid:
+            status['dpid'] = self.dpid
+            status['dpid_ports'] = self.ports
+
         self.send_message(PT_ADD_LVNF_RESPONSE, status)
 
     def send_del_lvnf_response(self, lvnf_id):
@@ -364,6 +369,11 @@ class EmpowerAgent(websocket.WebSocketApp):
             raise KeyError("LVNF %s not found" % lvnf_id)
 
         status = self.lvnfs[lvnf_id].to_dict()
+
+        if self.dpid:
+            status['dpid'] = self.dpid
+            status['dpid_ports'] = self.ports
+
         self.send_message(PT_DEL_LVNF_RESPONSE, status)
 
     def _handle_caps_request(self, message):
