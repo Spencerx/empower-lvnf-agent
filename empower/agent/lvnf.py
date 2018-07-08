@@ -242,7 +242,7 @@ class LVNF():
         # Script is ok, start LVNF
         threading.Thread(target=self.__init_lvnf, args=(xid,)).start()
 
-    def stop(self):
+    def stop(self, xid):
         """Stop click daemon."""
 
         # Disable heartbeat
@@ -270,7 +270,7 @@ class LVNF():
                      self.process.returncode)
 
         # send status
-        self.agent.send_del_lvnf_response(self.lvnf_id, 0)
+        self.agent.send_del_lvnf_response(self.lvnf_id, xid)
 
         # delete lvnf from agent
         del self.agent.lvnfs[self.lvnf_id]

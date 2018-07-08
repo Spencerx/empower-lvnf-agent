@@ -160,7 +160,7 @@ class EmpowerAgent(websocket.WebSocketApp):
         """Gracefully stop agent."""
 
         for lvnf in self.lvnfs.values():
-            lvnf.stop()
+            lvnf.stop(0)
 
     @property
     def ports(self):
