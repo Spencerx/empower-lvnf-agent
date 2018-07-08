@@ -307,7 +307,6 @@ class LVNF():
 
             self.ports[virtual_port_id]['hwaddr'] = get_hw_addr(iface)
             self.ports[virtual_port_id]['ovs_port_id'] = ovs_port_id
-            self.ports[virtual_port_id]['dpid'] = self.agent.dpid
 
     def __remove_ifaces(self):
         """Remove ifaces from bridge."""
@@ -359,6 +358,7 @@ class LVNF():
                'ctrl': self.ctrl,
                'script': self.script,
                'ports': self.ports,
+               'dpid': self.agent.dpid,
                'context': self.context,
                'returncode': self.process.returncode}
 
