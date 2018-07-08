@@ -270,7 +270,7 @@ class LVNF():
                      self.process.returncode)
 
         # send status
-        self.agent.send_del_lvnf_response(self.lvnf_id)
+        self.agent.send_del_lvnf_response(self.lvnf_id, 0)
 
         # delete lvnf from agent
         del self.agent.lvnfs[self.lvnf_id]
