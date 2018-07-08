@@ -24,6 +24,12 @@ import re
 import subprocess
 
 
+def get_xid():
+    """Return randon 32bits integers to be used as mod_id."""
+
+    return random.getrandbits(32)
+
+
 def get_hw_addr(ifname):
     """Fetch hardware address from ifname.
 

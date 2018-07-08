@@ -31,6 +31,7 @@ import _thread
 
 from empower.datatypes.etheraddress import EtherAddress
 from empower.core.jsonserializer import EmpowerEncoder
+from empower.agent.utils import get_xid
 from empower.core.image import Image
 from empower.agent.lvnf import get_hw_addr
 from empower.agent.lvnf import exec_cmd
@@ -311,15 +312,20 @@ class EmpowerAgent(websocket.WebSocketApp):
         handler = getattr(self, handler_name)
         handler(msg)
 
-    def send_message(self, message_type, message):
+    def send_message(self, message_type, message, xid):
         """Add fixed header fields and send message. """
 
         message['version'] = PT_VERSION
         message['type'] = message_type
         message['cpp'] = self.addr
         message['seq'] = self.seq
+        message['xid'] = xid
 
-        logging.info("Sending %s seq %u", message['type'], message['seq'])
+        logging.info("Sending %s seq %u xid %u",
+                     message['type'],
+                     message['seq'],
+                     message['xid'])
+
         msg = json.dumps(message, cls=EmpowerEncoder)
         self.uplink_bytes += len(msg)
         self.send(msg)
@@ -328,15 +334,15 @@ class EmpowerAgent(websocket.WebSocketApp):
         """ Send HELLO message. """
 
         hello = {'every': self.every}
-        self.send_message(PT_HELLO, hello)
+        self.send_message(PT_HELLO, hello, get_xid())
 
-    def send_caps_response(self):
+    def send_caps_response(self, xid):
         """ Send CAPS RESPONSE message. """
 
         caps = {'dpid': self.dpid, 'ports': self.ports}
-        self.send_message(PT_CAPS_RESPONSE, caps)
+        self.send_message(PT_CAPS_RESPONSE, caps, xid)
 
-    def send_lvnf_status_response(self):
+    def send_lvnf_status_response(self, xid):
         """ Send STATUS FUNCTION message. """
 
         message = {}
@@ -344,7 +350,7 @@ class EmpowerAgent(websocket.WebSocketApp):
         for lvnf in self.lvnfs:
             message[lvnf.lvnf_id] = lvnf.to_dict()
 
-        self.send_message(PT_LVNF_STATUS_RESPONSE, message)
+        self.send_message(PT_LVNF_STATUS_RESPONSE, message, xid)
 
     def send_add_lvnf_response(self, lvnf_id, xid):
         """ Send ADD_LVNF_RESPONSE message. """
@@ -353,20 +359,18 @@ class EmpowerAgent(websocket.WebSocketApp):
             raise KeyError("LVNF %s not found" % lvnf_id)
 
         status = self.lvnfs[lvnf_id].to_dict()
-        status['xid'] = xid
 
-        self.send_message(PT_ADD_LVNF_RESPONSE, status)
+        self.send_message(PT_ADD_LVNF_RESPONSE, status, xid)
 
-    def send_del_lvnf_response(self, lvnf_id):
+    def send_del_lvnf_response(self, lvnf_id, xid):
         """ Send DEL_LVNF_RESPONSE message. """
 
         if lvnf_id not in self.lvnfs:
             raise KeyError("LVNF %s not found" % lvnf_id)
 
         status = self.lvnfs[lvnf_id].to_dict()
-        status['xid'] = xid
 
-        self.send_message(PT_DEL_LVNF_RESPONSE, status)
+        self.send_message(PT_DEL_LVNF_RESPONSE, status, xid)
 
     def _handle_caps_request(self, message):
         """Handle CAPS_REQUEST message.
@@ -379,7 +383,7 @@ class EmpowerAgent(websocket.WebSocketApp):
 
         dump_message(message)
 
-        self.send_caps_response()
+        self.send_caps_response(message['xid'])
 
     def _handle_lvnf_status_request(self, message):
         """Handle STATUS_LVNF message.
@@ -392,7 +396,7 @@ class EmpowerAgent(websocket.WebSocketApp):
 
         dump_message(message)
 
-        self.send_lvnf_status_response()
+        self.send_lvnf_status_response(message['xid'])
 
     def _handle_lvnf_stats_request(self, message):
         """Handle LVNF_STATS message.
@@ -412,7 +416,7 @@ class EmpowerAgent(websocket.WebSocketApp):
 
         message['stats'] = self.lvnfs[lvnf_id].stats()
 
-        self.send_message(PT_LVNF_STATS_RESPONSE, message)
+        self.send_message(PT_LVNF_STATS_RESPONSE, message, message['xid'])
 
     def _handle_add_lvnf(self, message):
         """Handle ADD_LVNF message.
@@ -457,12 +461,13 @@ class EmpowerAgent(websocket.WebSocketApp):
         dump_message(message)
 
         lvnf_id = UUID(message['lvnf_id'])
+        xid = message['xid']
 
         if lvnf_id not in self.lvnfs:
             raise KeyError("LVNF %s not found" % lvnf_id)
 
         lvnf = self.lvnfs[lvnf_id]
-        lvnf.stop()
+        lvnf.stop(xid)
 
     def _handle_lvnf_get_request(self, message):
         """Handle an incoming LVNF_GET_REQUEST.
@@ -486,7 +491,7 @@ class EmpowerAgent(websocket.WebSocketApp):
         message['retcode'] = ret[0]
         message['samples'] = ret[1]
 
-        self.send_message(PT_LVNF_GET_RESPONSE, message)
+        self.send_message(PT_LVNF_GET_RESPONSE, message, message['xid'])
 
     def _handle_lvnf_set_request(self, message):
         """Handle an incoming LVNF_SET_REQUEST.
@@ -510,7 +515,7 @@ class EmpowerAgent(websocket.WebSocketApp):
         message['retcode'] = ret[0]
         message['samples'] = ret[1]
 
-        self.send_message(PT_LVNF_SET_RESPONSE, message)
+        self.send_message(PT_LVNF_SET_RESPONSE, message, message['xid'])
 
 
 def main():

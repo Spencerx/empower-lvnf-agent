@@ -240,7 +240,7 @@ class LVNF():
             return
 
         # Script is ok, start LVNF
-        threading.Thread(target=self.__init_lvnf, args=(xid)).start()
+        threading.Thread(target=self.__init_lvnf, args=(xid,)).start()
 
     def stop(self):
         """Stop click daemon."""
