@@ -347,7 +347,7 @@ class EmpowerAgent(websocket.WebSocketApp):
 
         message = {}
 
-        for lvnf in self.lvnfs:
+        for lvnf in self.lvnfs.values():
             message[lvnf.lvnf_id] = lvnf.to_dict()
 
         self.send_message(PT_LVNF_STATUS_RESPONSE, message, xid)
