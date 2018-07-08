@@ -149,9 +149,6 @@ class LVNF():
             # add interfaces
             self.__add_ifaces()
 
-            # send status
-            self.agent.send_caps_response(self.lvnf_id)
-
             # this thread is done, start hearbeat thread
             self.thread = threading.Thread(target=self.__heartbeat, args=())
             self.thread.signal = True
