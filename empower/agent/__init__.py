@@ -27,13 +27,14 @@ PT_LVNF_LEAVE = "lvnf_leave"
 
 # cpp to ctrl
 PT_HELLO = "hello"
-PT_CAPS = "caps"
+PT_CAPS_RESPONSE = "caps_response"
 PT_STATUS_LVNF = "status_lvnf"
 PT_LVNF_STATS_RESPONSE = "lvnf_stats_response"
 PT_LVNF_GET_RESPONSE = "lvnf_get_response"
 PT_LVNF_SET_RESPONSE = "lvnf_set_response"
 
 # ctrl to cpp
+PT_CAPS_REQUEST = "caps_request"
 PT_ADD_LVNF = "add_lvnf"
 PT_DEL_LVNF = "del_lvnf"
 PT_LVNF_STATS_REQUEST = "lvnf_stats_request"

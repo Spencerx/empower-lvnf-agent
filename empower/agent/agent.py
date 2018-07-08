@@ -38,7 +38,7 @@ from empower.agent.lvnf import LVNF
 from empower.agent.utils import get_dpid
 from empower.agent import PT_VERSION
 from empower.agent import PT_HELLO
-from empower.agent import PT_CAPS
+from empower.agent import PT_CAPS_RESPONSE
 from empower.agent import PT_STATUS_LVNF
 from empower.agent import PT_LVNF_STATS_RESPONSE
 from empower.agent import PT_LVNF_GET_RESPONSE
@@ -78,7 +78,6 @@ def on_open(websock):
     logging.info("Socket %s opened...", websock.url)
 
     websock.send_hello()
-    websock.send_caps()
 
     def run(websock):
         """Start hello messages."""
@@ -335,7 +334,7 @@ class EmpowerAgent(websocket.WebSocketApp):
         if self.dpid:
             caps = {'dpid': self.dpid, 'ports': self.ports}
 
-        self.send_message(PT_CAPS, caps)
+        self.send_message(PT_CAPS_RESPONSE, caps)
 
     def send_status_lvnf(self, lvnf_id):
         """ Send STATUS FUNCTION message. """
