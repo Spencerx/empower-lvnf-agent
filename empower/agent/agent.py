@@ -35,7 +35,6 @@ from empower.core.image import Image
 from empower.agent.lvnf import get_hw_addr
 from empower.agent.lvnf import exec_cmd
 from empower.agent.lvnf import LVNF
-from empower.agent.utils import get_dpid
 from empower.agent import PT_VERSION
 from empower.agent import PT_HELLO
 from empower.agent import PT_CAPS_RESPONSE
