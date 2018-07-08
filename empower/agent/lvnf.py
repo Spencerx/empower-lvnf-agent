@@ -168,7 +168,7 @@ class LVNF():
         logging.info("LVNF error: \n%s", errs.decode("utf-8"))
 
         # send status
-        self.agent.send_status_lvnf(self.lvnf_id)
+        self.agent.send_add_lvnf_response(self.lvnf_id)
 
         # delete lvnf from agent
         del self.agent.lvnfs[self.lvnf_id]
@@ -232,7 +232,7 @@ class LVNF():
             logging.info("LVNF error: \n%s", errs.decode("utf-8"))
 
             # send status
-            self.agent.send_status_lvnf(self.lvnf_id)
+            self.agent.send_add_lvnf_response(self.lvnf_id)
 
             # delete lvnf from agent
             del self.agent.lvnfs[self.lvnf_id]
@@ -270,7 +270,7 @@ class LVNF():
                      self.process.returncode)
 
         # send status
-        self.agent.send_status_lvnf(self.lvnf_id)
+        self.agent.send_del_lvnf_response(self.lvnf_id)
 
         # delete lvnf from agent
         del self.agent.lvnfs[self.lvnf_id]

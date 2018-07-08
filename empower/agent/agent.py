@@ -277,6 +277,13 @@ class EmpowerAgent(websocket.WebSocketApp):
         self.__ctrl = ctrl
 
     @property
+    def vnf_seq(self):
+        """Return new VNF seq."""
+
+        self.__vnf_seq += 1
+        return self.__vnf_seq
+
+    @property
     def seq(self):
         """Return the next sequence number."""
 
@@ -306,9 +313,8 @@ class EmpowerAgent(websocket.WebSocketApp):
 
         message['version'] = PT_VERSION
         message['type'] = message_type
-        message['addr'] = self.addr
+        message['cpp'] = self.addr
         message['seq'] = self.seq
-        message['every'] = self.every
 
         logging.info("Sending %s seq %u", message['type'], message['seq'])
         msg = json.dumps(message, cls=EmpowerEncoder)
@@ -318,33 +324,58 @@ class EmpowerAgent(websocket.WebSocketApp):
     def send_hello(self):
         """ Send HELLO message. """
 
-        hello = {}
+        hello = {'every': self.every}
         self.send_message(PT_HELLO, hello)
 
-    def send_caps(self, lvnf_id=None):
+    def send_caps_response(self):
         """ Send CAPS RESPONSE message. """
 
         caps = {}
 
         if self.dpid:
-            caps = {'dpid': self.dpid,
-                    'ports': self.ports}
+            caps = {'dpid': self.dpid, 'ports': self.ports}
 
         self.send_message(PT_CAPS, caps)
 
-        # send lvnf status message
-        if not lvnf_id:
-            for uuid in self.lvnfs:
-                self.send_status_lvnf(uuid)
-        else:
-            self.send_status_lvnf(lvnf_id)
+    def send_status_lvnf(self, lvnf_id):
+        """ Send STATUS FUNCTION message. """
 
-    @property
-    def vnf_seq(self):
-        """Return new VNF seq."""
+        if lvnf_id not in self.lvnfs:
+            raise KeyError("LVNF %s not found" % lvnf_id)
 
-        self.__vnf_seq += 1
-        return self.__vnf_seq
+        status = self.lvnfs[lvnf_id].to_dict()
+        self.send_message(PT_STATUS_LVNF, status)
+
+    def send_add_lvnf_response(self, lvnf_id):
+        """ Send ADD_LVNF_RESPONSE message. """
+
+        if lvnf_id not in self.lvnfs:
+            raise KeyError("LVNF %s not found" % lvnf_id)
+
+        status = self.lvnfs[lvnf_id].to_dict()
+        self.send_message(PT_STATUS_LVNF, status)
+
+    def send_del_lvnf_response(self, lvnf_id):
+        """ Send DEL_LVNF_RESPONSE message. """
+
+        if lvnf_id not in self.lvnfs:
+            raise KeyError("LVNF %s not found" % lvnf_id)
+
+        status = self.lvnfs[lvnf_id].to_dict()
+        self.send_message(PT_STATUS_LVNF, status)
+
+    def _handle_caps_request(self, message):
+        """Handle CAPS_REQUEST message.
+
+        Args:
+            message, a CAPS_REQUEST message
+        Returns:
+            None
+        """
+
+        dump_message(message)
+
+        self.send_caps_response()
 
     def _handle_lvnf_stats_request(self, message):
         """Handle LVNF_STATS message.
@@ -462,15 +493,6 @@ class EmpowerAgent(websocket.WebSocketApp):
         message['samples'] = ret[1]
 
         self.send_message(PT_LVNF_SET_RESPONSE, message)
-
-    def send_status_lvnf(self, lvnf_id):
-        """ Send STATUS FUNCTION message. """
-
-        if lvnf_id not in self.lvnfs:
-            raise KeyError("LVNF %s not found" % lvnf_id)
-
-        status = self.lvnfs[lvnf_id].to_dict()
-        self.send_message(PT_STATUS_LVNF, status)
 
 
 def main():
